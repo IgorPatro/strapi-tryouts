@@ -66,7 +66,12 @@ jobs:
           TARGET: "/home/strapi-tryouts"
 
       - name: Building project
-        run: |
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
           npm install
           NODE_ENV=production npm run build
 
@@ -78,4 +83,4 @@ jobs:
           password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
             cd /home/strapi-tryouts
-            pm2 start ecosystem.config.js --env production
+            pm2 start ecosystem.config.js --env production --watch
