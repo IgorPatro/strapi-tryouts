@@ -1,0 +1,80 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  connection-test:
+    name: VPS connection test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executing remote command on vps
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: pwd
+
+  build-and-deploy:
+    name: Deploy, Build and Start
+    needs: connection-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Geting code
+        uses: actions/checkout@v2
+        with:
+          lfs: true
+
+      - name: Fetching LFS assets
+        run: git lfs checkout
+
+      - name: Using Node.js 16.5.0
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: "16.5.0"
+
+      - name: Creating env file
+        run: |
+          touch .env
+          echo HOST=${{ secrets.HOST }} >> .env
+          echo PORT=${{ secrets.PORT }} >> .env
+          echo APP_KEYS=${{ secrets.APP_KEYS }} >> .env
+          echo API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }} >> .env
+          echo ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} >> .env
+          echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+
+      - name: Prepering server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            cd /home/strapi-tryouts
+            pm2 stop ecosystem.config.js || true
+            pm2 delete ecosystem.config.js || true
+
+      - name: Upload website files
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
+          SOURCE: "./"
+          REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
+          REMOTE_USER: ${{ secrets.DEPLOY_USERNAME }}
+          TARGET: "/home/strapi-tryouts"
+
+      - name: Building project
+        run: |
+          npm install
+          npm run build
+
+      - name: Starting project
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            cd /home/strapi-tryouts
+            pm2 start ecosystem.config.json --env production

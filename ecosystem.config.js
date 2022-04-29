@@ -9,4 +9,4 @@ module.exports = {
   ],
 };
 
-// Production start: pm2 start process.json --env production
+// Production start: pm2 start ecosystem.config.json --env production
