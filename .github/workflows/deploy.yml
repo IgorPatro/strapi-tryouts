@@ -43,6 +43,7 @@ jobs:
           echo API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }} >> .env
           echo ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} >> .env
           echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+          cat .env
 
       - name: Prepering server
         uses: appleboy/ssh-action@master
@@ -67,7 +68,7 @@ jobs:
       - name: Building project
         run: |
           npm install
-          npm run build
+          NODE_ENV=production npm run build
 
       - name: Starting project
         uses: appleboy/ssh-action@master
@@ -77,4 +78,4 @@ jobs:
           password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
             cd /home/strapi-tryouts
-            pm2 start ecosystem.config.json --env production
+            pm2 start ecosystem.config.js --env production
