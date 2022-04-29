@@ -52,18 +52,18 @@ jobs:
           username: ${{ secrets.DEPLOY_USERNAME }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
-            cd /home/strapi-tryouts
+            cd /home/strapi
             pm2 stop ecosystem.config.js || true
             pm2 delete ecosystem.config.js || true
 
-      - name: Upload website files
+      - name: Uploading website files
         uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_KEY }}
           SOURCE: "./"
           REMOTE_HOST: ${{ secrets.DEPLOY_HOST }}
           REMOTE_USER: ${{ secrets.DEPLOY_USERNAME }}
-          TARGET: "/home/strapi-tryouts"
+          TARGET: "/home/strapi"
 
       - name: Building project
         uses: appleboy/ssh-action@master
@@ -72,8 +72,9 @@ jobs:
           username: ${{ secrets.DEPLOY_USERNAME }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
-          npm install
-          NODE_ENV=production npm run build
+            cd /home/strapi
+            npm install
+            NODE_ENV=production npm run build
 
       - name: Starting project
         uses: appleboy/ssh-action@master
@@ -82,5 +83,5 @@ jobs:
           username: ${{ secrets.DEPLOY_USERNAME }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           script: |
-            cd /home/strapi-tryouts
+            cd /home/strapi
             pm2 start ecosystem.config.js --env production --watch
