@@ -9,4 +9,4 @@ module.exports = {
   ],
 };
 
-// Production start: pm2 start ecosystem.config.js --env production --watch
+// Production start: pm2 start ecosystem.config.js --env production
